@@ -47,23 +47,6 @@ void registerWith({dynamic options}) {
   MdkVideoPlayerPlatform.registerVideoPlayerPlatformsWith(options: options);
 }
 
-/// Stash mdk Player properties to apply to the next Player created
-/// for [url]. Lets callers pass per-stream FFmpeg AVOptions through
-/// to mdk that aren't representable through the standard
-/// VideoPlayerController API.
-///
-/// Typical use: CENC ClearKey decryption — call this with
-/// `{'decryption_key': '<hex>'}` immediately before constructing the
-/// VideoPlayerController for that URL. The map is consumed (and
-/// removed from the side-channel) by the next [create] call that
-/// opens this URL.
-///
-/// Pass an empty map (or call again with the same URL after the
-/// stream has finished) to clear a stale entry.
-void setStreamProperties(String url, Map<String, String> props) {
-  MdkVideoPlayerPlatform.setStreamProperties(url, props);
-}
-
 /// Registers this plugin automatically by dart tooling. requires `dartPluginClass: VideoPlayerRegistrant` in pubspec.yaml
 class VideoPlayerRegistrant {
   static void registerWith() {
