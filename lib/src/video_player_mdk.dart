@@ -119,6 +119,31 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
   // called!" SIGABRT during rapid channel switches. Setting
   // ['OpenSL', 'AudioTrack'] here routes around the bug.
   static List<String>? _audioBackends;
+  // Per-stream additional mdk Player properties, keyed by the
+  // stream URL the caller is about to open. Consumed (and removed)
+  // by [create] when that URL is opened, so the next stream with a
+  // different URL doesn't inherit them. Populated externally via
+  // the top-level [setStreamProperties] in fvp.dart.
+  //
+  // Used by callers that need to pass per-stream FFmpeg AVOptions
+  // through to mdk — e.g. CENC `decryption_key=<hex>` for ClearKey
+  // protected MP4/m4s segments — that aren't representable through
+  // the standard VideoPlayerController API.
+  static final Map<String, Map<String, String>> _perUrlProps = {};
+
+  /// Stash mdk Player properties to apply to the next Player
+  /// created for [url]. The map is consumed by the next [create]
+  /// call that opens this URL; if the URL never opens, the entry
+  /// stays around — callers should clear by calling this with an
+  /// empty map.
+  static void setStreamProperties(String url, Map<String, String> props) {
+    if (props.isEmpty) {
+      _perUrlProps.remove(url);
+    } else {
+      _perUrlProps[url] = Map<String, String>.from(props);
+    }
+  }
+
   static final _mdkLog = Logger('mdk');
   // _prevImpl: required if registerWith() can be invoked multiple times by user
   static VideoPlayerPlatform? _prevImpl;
@@ -288,6 +313,17 @@ class MdkVideoPlayerPlatform extends VideoPlayerPlatform {
     _playerOpts?.forEach((key, value) {
       player.setProperty(key, value);
     });
+
+    // Per-stream properties stashed by [setStreamProperties] for this
+    // exact URL. Applied AFTER the global _playerOpts so they win on
+    // any conflicting key, and removed from the map so the next
+    // stream with a different URL doesn't inherit them.
+    final perStream = _perUrlProps.remove(uri);
+    if (perStream != null) {
+      perStream.forEach((key, value) {
+        player.setProperty(key, value);
+      });
+    }
 
     if (_decoders != null) {
       player.videoDecoders = _decoders!;
