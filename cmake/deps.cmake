@@ -39,7 +39,16 @@ macro(fvp_setup_deps)
   if("$ENV{FVP_DEPS_URL}" MATCHES "^http") # github release: https://github.com/wang-bin/mdk-sdk/releases/latest/download
     set(FVP_DEPS_URL $ENV{FVP_DEPS_URL}) # TODO: md5
   else()
-    set(FVP_DEPS_URL https://sourceforge.net/projects/mdk-sdk/files/nightly)
+    # Pin Android/Windows/Linux to the mdk 0.36.0 RELEASE (was the moving
+    # `nightly` build). 0.36.0 fixes the VideoToolbox decoder-open crash on
+    # Apple ("Ignore session create error for hvc1, fix decoder open error
+    # on macOS") and keeps every platform on the SAME mdk build as the Apple
+    # CocoaPods pin (`mdk ~> 0.36.0` in darwin/fvp.podspec) instead of an
+    # unpinned nightly that can drift under us. The v0.36.0 release ships the
+    # exact asset names used above (mdk-sdk-android.7z, mdk-sdk-windows-x64.7z,
+    # mdk-sdk-windows.7z, mdk-sdk-linux-x64.tar.xz, mdk-sdk-linux.tar.xz).
+    # Override with the FVP_DEPS_URL env var to point at a different release.
+    set(FVP_DEPS_URL https://github.com/wang-bin/mdk-sdk/releases/download/v0.36.0)
   endif()
   set(MDK_SDK_URL ${FVP_DEPS_URL}/${MDK_SDK_PKG})
   set(MDK_SDK_SAVE "${CMAKE_CURRENT_SOURCE_DIR}/${MDK_SDK_PKG}")

@@ -25,7 +25,16 @@ Flutter video player plugin.
   s.osx.dependency 'FlutterMacOS'
   s.ios.deployment_target = '12.0'
   s.osx.deployment_target = '10.13'
-  s.dependency 'mdk', '~> 0.35.1'
+  # Bumped 0.35.1 -> 0.36.0: 0.35.x's VideoToolbox decoder hard-crashes
+  # (EXC_BAD_ACCESS in VideoToolboxDecoder::open() -> OutputFormat ->
+  # CFDictionaryGetValueIfPresent) on streams where VT can't create a
+  # decode session (e.g. hvc1/HEVC with missing/late codec params, common
+  # in live IPTV). The segfault aborts the process before the FFmpeg
+  # software fallback can run. mdk 0.36.0 "Ignore session create error for
+  # hvc1, fix decoder open error on macOS" makes VT fail gracefully, so the
+  # ['VT','FFmpeg'] chain keeps hardware-first and only drops to software
+  # for the streams VT can't handle, instead of crashing.
+  s.dependency 'mdk', '~> 0.36.0'
 
 #  s.platform = :osx, '10.11'
   s.pod_target_xcconfig = { 'DEFINES_MODULE' => 'YES' }
