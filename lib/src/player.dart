@@ -159,8 +159,15 @@ class Player {
     });
   }
 
-  /// Release resources
-  void dispose() async {
+  /// Release resources.
+  ///
+  /// Returns a future that completes only after the native mdk player has been
+  /// deleted (mdkPlayerAPI_delete joins the demuxer/decoder threads). Callers
+  /// MUST await this before reusing the surface or standing up another player,
+  /// otherwise the still-live native player races the new one. Previously this
+  /// was `void ... async` (fire-and-forget): dispose() resolved before the
+  /// native delete ran, leaving a zombie player.
+  Future<void> dispose() async {
     if (_pp == nullptr) {
       textureId.dispose();
       return;
